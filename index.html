@@ -852,7 +852,7 @@ body {
         <nav class="dashboard-nav">
             <button class="nav-btn active" data-section="risk-assessment">Risk Assessment</button>
             <button class="nav-btn" data-section="car-hematotox">CAR-HEMATOTOX</button>
-            <button class="nav-btn" data-section="ipet-score">IPET Score</button>
+            <button class="nav-btn" data-section="ipet-score">IPI Risk Score</button>
             <button class="nav-btn" data-section="toxicities">Toxicities</button>
             <button class="nav-btn" data-section="outcomes">Outcomes</button>
             <button class="nav-btn" data-section="references">References</button>
@@ -1155,19 +1155,22 @@ body {
             <!-- IPET Score Section -->
             <section id="ipet-score" class="dashboard-section">
                 <div class="section-header">
-                    <h2>IPET Score</h2>
-                    <p>International Prognostic Index for CAR-T Therapy</p>
+                    <h2>IPI Risk Score</h2>
+                    <p>Modified International Prognostic Index for CAR-T patient stratification</p>
                 </div>
                 
                 <div class="hematotox-calculator">
                     <div class="calculator-info">
                         <div class="info-card">
-                            <h3>IPET Components</h3>
+                            <h3>Modified IPI Components</h3>
                             <ul>
                                 <li>Advanced stage (III/IV): +1 point</li>
                                 <li>Elevated LDH (>ULN): +1 point</li>
                                 <li>Low absolute neutrophil count (<1.5): +1 point</li>
                             </ul>
+                            <p style="margin-top: 1rem; font-style: italic; color: #6c757d;">
+                                This adapts traditional IPI factors for CAR-T patient stratification.
+                            </p>
                         </div>
                     </div>
                     
@@ -1194,7 +1197,7 @@ body {
                         </div>
                         
                         <button class="calculate-btn" onclick="calculateIPET()">
-                            <i class="fas fa-calculator"></i> Calculate IPET Score
+                            <i class="fas fa-calculator"></i> Calculate IPI Risk Score
                         </button>
                     </div>
                     
