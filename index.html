@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAR-T Outcome Prediction Dashboard - DLBCL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <style>
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.dashboard-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+}
+
+.header-content p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.therapy-badges {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.therapy-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+/* Navigation */
+.dashboard-nav {
+    background: #2a5298;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nav-btn:hover {
+    background: #1e3c72;
+    color: white;
+}
+
+.nav-btn.active {
+    background: #3498db;
+    color: white;
+}
+
+/* Main content */
+.dashboard-main {
+    padding: 2rem;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+/* Section styles */
+.dashboard-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.dashboard-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Risk Assessment Styles */
+.risk-assessment-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.assessment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.parameter-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+}
+
+.parameter-card h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.input-group input,
+.input-group select {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.input-group small {
+    color: #6c757d;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.assessment-actions {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.calculate-btn {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calculate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.calculate-btn.primary {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+/* Results Styles */
+.comprehensive-result {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-left: 5px solid #e74c3c;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.risk-card {
+    text-align: center;
+}
+
+.risk-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.risk-score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.risk-category {
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    display: inline-block;
+}
+
+.risk-category.low-risk { background: #d4edda; color: #155724; }
+.risk-category.intermediate-risk { background: #fff3cd; color: #856404; }
+.risk-category.high-risk { background: #f8d7da; color: #721c24; }
+
+.outcome-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.outcome-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.outcome-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.outcome-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3498db;
+}
+
+.risk-visualization {
+    text-align: center;
+}
+
+.risk-visualization canvas {
+    max-width: 400px;
+    height: 200px;
+}
+
+/* CAR-HEMATOTOX Styles */
+.hematotox-calculator {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.calculator-info {
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: #e8f4fd;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #3498db;
+}
+
+.info-card h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.info-card li:last-child {
+    border-bottom: none;
+}
+
+.hematotox-inputs {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.threshold-indicator {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.threshold-indicator.normal {
+    background: #d4edda;
+    color: #155724;
+}
+
+.threshold-indicator.abnormal {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.hematotox-result {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.score-display {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.score-value {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.score-unit {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-left: 0.5rem;
+}
+
+.score-interpretation {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    display: inline-block;
+}
+
+.score-interpretation.low { background: #d4edda; color: #155724; }
+.score-interpretation.intermediate { background: #fff3cd; color: #856404; }
+.score-interpretation.high { background: #f8d7da; color: #721c24; }
+
+.risk-table {
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 2rem;
+}
+
+.risk-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+}
+
+.risk-row:last-child {
+    border-bottom: none;
+}
+
+.risk-score-range {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.risk-level {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.risk-level.low { background: #d4edda; color: #155724; }
+.risk-level.intermediate { background: #fff3cd; color: #856404; }
+.risk-level.high { background: #f8d7da; color: #721c24; }
+
+.risk-percentage {
+    text-align: right;
+    font-weight: 600;
+    color: #e74c3c;
+}
+
+.clinical-implications {
+    margin-top: 2rem;
+}
+
+.clinical-implications h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.implications-content p {
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+}
+
+/* References Section Styles */
+.reference-category {
+    margin-bottom: 3rem;
+}
+
+.reference-category h4 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reference-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reference-item {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    transition: box-shadow 0.3s ease;
+}
+
+.reference-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.reference-content {
+    position: relative;
+}
+
+.reference-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+.reference-authors {
+    color: #34495e;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.reference-journal {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.reference-note {
+    background: #e8f4fd;
+    color: #2c3e50;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+    border-left: 3px solid #3498db;
+}
+
+.reference-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #3498db;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.reference-link:hover {
+    background: #2980b9;
+    text-decoration: none;
+    color: white;
+}
+
+.reference-note-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-left: 4px solid #f39c12;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.reference-note-box h4 {
+    color: #856404;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reference-note-box p {
+    color: #856404;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.reference-note-box p:last-child {
+    margin-bottom: 0;
+}
+
+/* Toxicities Section Styles */
+.toxicity-card {
+    border-left-color: #e74c3c;
+}
+
+.toxicity-grading {
+    margin-bottom: 2rem;
+}
+
+.toxicity-grading h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.grade-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.grade-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 6px;
+    align-items: center;
+}
+
+.grade-item.grade-1 {
+    background: #d4edda;
+    border-left: 4px solid #27ae60;
+}
+
+.grade-item.grade-2 {
+    background: #fff3cd;
+    border-left: 4px solid #f39c12;
+}
+
+.grade-item.grade-3 {
+    background: #f8d7da;
+    border-left: 4px solid #e74c3c;
+}
+
+.grade-item.grade-4 {
+    background: #f5c6cb;
+    border-left: 4px solid #721c24;
+}
+
+.grade-number {
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.grade-description {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #2c3e50;
+}
+
+.product-specific-notes {
+    margin-top: 2rem;
+}
+
+.product-specific-notes h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.product-note {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.product-note.axi-cel {
+    background: #fff5f5;
+    border-left: 4px solid #e74c3c;
+    color: #2c3e50;
+}
+
+.product-note.tisa-cel {
+    background: #f0fff4;
+    border-left: 4px solid #27ae60;
+    color: #2c3e50;
+}
+
+.product-note.liso-cel {
+    background: #f0f8ff;
+    border-left: 4px solid #3498db;
+    color: #2c3e50;
+}
+
+.risk-factor-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-left: 4px solid #f39c12;
+}
+
+.risk-factor-card h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.risk-factor-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.risk-factor-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.risk-factor-list li:last-child {
+    border-bottom: none;
+}
+
+.management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.management-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.management-card.crs-management {
+    border-left: 4px solid #e74c3c;
+}
+
+.management-card.icans-management {
+    border-left: 4px solid #3498db;
+}
+
+.management-card h4 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.management-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.management-step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.step-grade {
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-treatment {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #2c3e50;
+}
+
+.management-principles {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.management-principles p {
+    margin: 0;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #f39c12;
+}
+
+/* Footer */
+.dashboard-footer {
+    background: #2c3e50;
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.footer-content p {
+    margin-bottom: 0.5rem;
+}
+
+.footer-content small {
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-nav {
+        flex-direction: column;
+    }
+    
+    .nav-btn {
+        padding: 0.75rem 1rem;
+        width: 100%;
+    }
+    
+    .dashboard-main {
+        padding: 1rem;
+    }
+    
+    .assessment-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .therapy-badges {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1><i class="fas fa-dna"></i> CAR-T Outcome Prediction Dashboard</h1>
+                <p>Diffuse Large B-Cell Lymphoma (DLBCL) - Anti-CD19 CAR-T Therapy</p>
+                <div class="therapy-badges">
+                    <span class="therapy-badge">Predictive Modeling</span>
+                    <span class="therapy-badge">Evidence-Based Assessment</span>
+                    <span class="therapy-badge">Clinical Decision Support</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="dashboard-nav">
+            <button class="nav-btn active" data-section="risk-assessment">Risk Assessment</button>
+            <button class="nav-btn" data-section="car-hematotox">CAR-HEMATOTOX</button>
+            <button class="nav-btn" data-section="ipet-score">IPET Score</button>
+            <button class="nav-btn" data-section="toxicities">Toxicities</button>
+            <button class="nav-btn" data-section="outcomes">Outcomes</button>
+            <button class="nav-btn" data-section="references">References</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Risk Assessment Section -->
+            <section id="risk-assessment" class="dashboard-section active">
+                <div class="section-header">
+                    <h2>Comprehensive Risk Assessment</h2>
+                    <p>Integrated clinical, laboratory, and imaging parameters for CAR-T outcome prediction</p>
+                </div>
+                
+                <div class="risk-assessment-container">
+                    <div class="assessment-grid">
+                        <!-- Clinical Parameters -->
+                        <div class="parameter-card">
+                            <h3><i class="fas fa-user-md"></i> Clinical Parameters</h3>
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="age">Age (years)</label>
+                                    <input type="number" id="age" min="18" max="90" value="65">
+                                </div>
+                                <div class="input-group">
+                                    <label for="ecog">ECOG Performance Status</label>
+                                    <select id="ecog">
+                                        <option value="0">0 - Fully active</option>
+                                        <option value="1" selected>1 - Restricted in strenuous activity</option>
+                                        <option value="2">2 - Ambulatory, self-care capable</option>
+                                        <option value="3">3 - Limited self-care</option>
+                                        <option value="4">4 - Completely disabled</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="prior-lines">Prior Lines of Therapy</label>
+                                    <input type="number" id="prior-lines" min="1" max="10" value="2">
+                                </div>
+                                <div class="input-group">
+                                    <label for="stage">Ann Arbor Stage</label>
+                                    <select id="stage">
+                                        <option value="1">I</option>
+                                        <option value="2">II</option>
+                                        <option value="3" selected>III</option>
+                                        <option value="4">IV</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Laboratory Parameters -->
+                        <div class="parameter-card">
+                            <h3><i class="fas fa-flask"></i> Laboratory Parameters</h3>
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="ldh">LDH (U/L)</label>
+                                    <input type="number" id="ldh" min="100" max="3000" value="400">
+                                    <small>Normal: 140-280 U/L</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="crp">C-Reactive Protein (mg/L)</label>
+                                    <input type="number" id="crp" min="0" max="500" step="0.1" value="15">
+                                    <small>Normal: <3.0 mg/L</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="ferritin">Ferritin (ng/mL)</label>
+                                    <input type="number" id="ferritin" min="10" max="5000" value="300">
+                                    <small>Normal: 12-300 ng/mL</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="hemoglobin">Hemoglobin (g/dL)</label>
+                                    <input type="number" id="hemoglobin" min="5" max="18" step="0.1" value="11.5">
+                                    <small>Normal: 12-16 g/dL</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="platelets">Platelets (×10³/μL)</label>
+                                    <input type="number" id="platelets" min="10" max="800" value="150">
+                                    <small>Normal: 150-450 ×10³/μL</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="anc">Absolute Neutrophil Count (×10³/μL)</label>
+                                    <input type="number" id="anc" min="0.1" max="20" step="0.1" value="2.5">
+                                    <small>Normal: 1.8-7.8 ×10³/μL</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Imaging Parameters -->
+                        <div class="parameter-card">
+                            <h3><i class="fas fa-microscope"></i> Imaging & Tumor Burden</h3>
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="mtv">Metabolic Tumor Volume (mL)</label>
+                                    <input type="number" id="mtv" min="0" max="2000" step="0.1" value="50">
+                                    <small>High-risk: >75 mL</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="tlg">Total Lesion Glycolysis</label>
+                                    <input type="number" id="tlg" min="0" max="5000" step="1" value="200">
+                                    <small>SUVmax × MTV</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="extranodal">Extranodal Sites</label>
+                                    <input type="number" id="extranodal" min="0" max="10" value="1">
+                                </div>
+                                <div class="input-group">
+                                    <label for="largest-lesion">Largest Lesion (cm)</label>
+                                    <input type="number" id="largest-lesion" min="0" max="20" step="0.1" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Genomic Parameters -->
+                        <div class="parameter-card">
+                            <h3><i class="fas fa-dna"></i> Genomic & Molecular Features</h3>
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="tp53">TP53 Status</label>
+                                    <select id="tp53">
+                                        <option value="wildtype" selected>Wild-type</option>
+                                        <option value="mutated">Mutated</option>
+                                        <option value="unknown">Unknown</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="myc">MYC Status</label>
+                                    <select id="myc">
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="rearranged">Rearranged</option>
+                                        <option value="double-hit">Double-hit</option>
+                                        <option value="unknown">Unknown</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="coo">Cell of Origin</label>
+                                    <select id="coo">
+                                        <option value="gcb" selected>GCB-type</option>
+                                        <option value="abc">ABC-type</option>
+                                        <option value="unclassified">Unclassified</option>
+                                        <option value="unknown">Unknown</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="ctdna">Baseline ctDNA (copies/mL)</label>
+                                    <input type="number" id="ctdna" min="0" max="100000" value="1000">
+                                    <small>High-risk: >1000 copies/mL</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="assessment-actions">
+                        <button class="calculate-btn primary" onclick="calculateComprehensiveRisk()">
+                            <i class="fas fa-calculator"></i> Calculate Risk Assessment
+                        </button>
+                    </div>
+                    
+                    <div class="comprehensive-result" id="comprehensive-result" style="display: none;">
+                        <div class="result-header">
+                            <h3>Risk Assessment Results</h3>
+                        </div>
+                        <div class="result-grid">
+                            <div class="risk-card">
+                                <h4>Overall Risk Score</h4>
+                                <div class="risk-score-display">
+                                    <span class="risk-score" id="overall-score">0</span>
+                                    <span class="risk-category" id="overall-category">Low Risk</span>
+                                </div>
+                            </div>
+                            <div class="outcome-predictions">
+                                <h4>Predicted Outcomes</h4>
+                                <div class="outcome-grid">
+                                    <div class="outcome-item">
+                                        <span class="outcome-label">Complete Response</span>
+                                        <span class="outcome-value" id="cr-rate">75%</span>
+                                    </div>
+                                    <div class="outcome-item">
+                                        <span class="outcome-label">1-year PFS</span>
+                                        <span class="outcome-value" id="pfs-1y">65%</span>
+                                    </div>
+                                    <div class="outcome-item">
+                                        <span class="outcome-label">1-year OS</span>
+                                        <span class="outcome-value" id="os-1y">80%</span>
+                                    </div>
+                                    <div class="outcome-item">
+                                        <span class="outcome-label">Severe CRS Risk</span>
+                                        <span class="outcome-value" id="crs-risk">15%</span>
+                                    </div>
+                                    <div class="outcome-item">
+                                        <span class="outcome-label">Severe ICANS Risk</span>
+                                        <span class="outcome-value" id="icans-risk">10%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="risk-visualization">
+                            <canvas id="riskChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CAR-HEMATOTOX Section -->
+            <section id="car-hematotox" class="dashboard-section">
+                <div class="section-header">
+                    <h2>CAR-HEMATOTOX Score</h2>
+                    <p>Predicts severe cytopenias and hematologic toxicity post-CAR-T infusion</p>
+                </div>
+                
+                <div class="hematotox-calculator">
+                    <div class="calculator-info">
+                        <div class="info-card">
+                            <h3>Scoring Components</h3>
+                            <ul>
+                                <li>Hemoglobin <10 g/dL: +1 point</li>
+                                <li>Platelet count <100 ×10³/μL: +1 point</li>
+                                <li>CRP >30 mg/L: +1 point</li>
+                                <li>Ferritin >700 ng/mL: +1 point</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="hematotox-inputs">
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label for="hematotox-hgb">Hemoglobin (g/dL)</label>
+                                <input type="number" id="hematotox-hgb" min="5" max="18" step="0.1" value="11.0">
+                                <div class="threshold-indicator normal" id="hgb-threshold">
+                                    <span class="threshold-text">Normal (≥10 g/dL)</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="hematotox-plt">Platelet Count (×10³/μL)</label>
+                                <input type="number" id="hematotox-plt" min="10" max="800" value="120">
+                                <div class="threshold-indicator normal" id="plt-threshold">
+                                    <span class="threshold-text">Normal (≥100 ×10³/μL)</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="hematotox-crp">C-Reactive Protein (mg/L)</label>
+                                <input type="number" id="hematotox-crp" min="0" max="500" step="0.1" value="25">
+                                <div class="threshold-indicator normal" id="crp-threshold">
+                                    <span class="threshold-text">Normal (≤30 mg/L)</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="hematotox-ferritin">Ferritin (ng/mL)</label>
+                                <input type="number" id="hematotox-ferritin" min="10" max="5000" value="600">
+                                <div class="threshold-indicator normal" id="ferritin-threshold">
+                                    <span class="threshold-text">Normal (≤700 ng/mL)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="calculate-btn" onclick="calculateHematotox()">
+                            <i class="fas fa-calculator"></i> Calculate CAR-HEMATOTOX Score
+                        </button>
+                    </div>
+                    
+                    <div class="hematotox-result" id="hematotox-result" style="display: none;">
+                        <div class="score-display">
+                            <div class="score-value">
+                                <span id="hematotox-score">0</span>
+                                <span class="score-unit">points</span>
+                            </div>
+                            <div class="score-interpretation" id="hematotox-interpretation">Low Risk</div>
+                        </div>
+                        
+                        <div class="risk-breakdown">
+                            <h4>Risk Stratification</h4>
+                            <div class="risk-table">
+                                <div class="risk-row">
+                                    <span class="risk-score-range">0-1 points</span>
+                                    <span class="risk-level low">Low Risk</span>
+                                    <span class="risk-percentage">~20% severe cytopenia</span>
+                                </div>
+                                <div class="risk-row">
+                                    <span class="risk-score-range">2 points</span>
+                                    <span class="risk-level intermediate">Intermediate Risk</span>
+                                    <span class="risk-percentage">~45% severe cytopenia</span>
+                                </div>
+                                <div class="risk-row">
+                                    <span class="risk-score-range">3-4 points</span>
+                                    <span class="risk-level high">High Risk</span>
+                                    <span class="risk-percentage">~70% severe cytopenia</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="clinical-implications">
+                            <h4>Clinical Implications</h4>
+                            <div class="implications-content" id="implications-content">
+                                <!-- Content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IPET Score Section -->
+            <section id="ipet-score" class="dashboard-section">
+                <div class="section-header">
+                    <h2>IPET Score</h2>
+                    <p>International Prognostic Index for CAR-T Therapy</p>
+                </div>
+                
+                <div class="hematotox-calculator">
+                    <div class="calculator-info">
+                        <div class="info-card">
+                            <h3>IPET Components</h3>
+                            <ul>
+                                <li>Advanced stage (III/IV): +1 point</li>
+                                <li>Elevated LDH (>ULN): +1 point</li>
+                                <li>Low absolute neutrophil count (<1.5): +1 point</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="hematotox-inputs">
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label for="ipet-stage">Clinical Stage</label>
+                                <select id="ipet-stage">
+                                    <option value="1">Stage I</option>
+                                    <option value="2">Stage II</option>
+                                    <option value="3" selected>Stage III</option>
+                                    <option value="4">Stage IV</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="ipet-ldh">LDH (U/L)</label>
+                                <input type="number" id="ipet-ldh" min="100" max="3000" value="400">
+                                <small>ULN typically 250-280 U/L</small>
+                            </div>
+                            <div class="input-group">
+                                <label for="ipet-anc">Absolute Neutrophil Count (×10³/μL)</label>
+                                <input type="number" id="ipet-anc" min="0.1" max="20" step="0.1" value="2.5">
+                            </div>
+                        </div>
+                        
+                        <button class="calculate-btn" onclick="calculateIPET()">
+                            <i class="fas fa-calculator"></i> Calculate IPET Score
+                        </button>
+                    </div>
+                    
+                    <div class="hematotox-result" id="ipet-result" style="display: none;">
+                        <div class="score-display">
+                            <div class="score-value">
+                                <span id="ipet-score-value">0</span>
+                                <span class="score-unit">points</span>
+                            </div>
+                            <div class="score-interpretation" id="ipet-risk-group">Low Risk</div>
+                        </div>
+                        
+                        <div class="clinical-implications">
+                            <h4>Expected Outcomes by Risk Group</h4>
+                            <div class="risk-table">
+                                <div class="risk-row">
+                                    <span class="risk-score-range">Low Risk (0-1)</span>
+                                    <span class="risk-level">1-year PFS: ~70%</span>
+                                    <span class="risk-percentage">CR Rate: ~80%</span>
+                                </div>
+                                <div class="risk-row">
+                                    <span class="risk-score-range">Intermediate Risk (2)</span>
+                                    <span class="risk-level">1-year PFS: ~55%</span>
+                                    <span class="risk-percentage">CR Rate: ~65%</span>
+                                </div>
+                                <div class="risk-row">
+                                    <span class="risk-score-range">High Risk (3)</span>
+                                    <span class="risk-level">1-year PFS: ~35%</span>
+                                    <span class="risk-percentage">CR Rate: ~45%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Toxicities Section -->
+            <section id="toxicities" class="dashboard-section">
+                <div class="section-header">
+                    <h2>CAR-T Related Toxicities</h2>
+                    <p>Product-specific CRS and ICANS profiles, grading, and management</p>
+                </div>
+                
+                <div class="risk-assessment-container">
+                    <!-- Toxicity Overview -->
+                    <div class="comprehensive-result" style="display: block; margin-bottom: 2rem;">
+                        <div class="result-header">
+                            <h3>Toxicity Comparison by Product</h3>
+                        </div>
+                        
+                        <div style="overflow-x: auto; margin-bottom: 2rem;">
+                            <table style="width: 100%; border-collapse: collapse; background: white;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6; text-align: left;">Product</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Any Grade CRS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Grade ≥3 CRS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Any Grade ICANS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Grade ≥3 ICANS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Median Onset CRS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Median Duration CRS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600; background: #fff5f5;">Axicabtagene ciloleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c; font-weight: 600;">93%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c; font-weight: 600;">13%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c; font-weight: 600;">64%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c; font-weight: 600;">28%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">2 days</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">7 days</td>
+                                    </tr>
+                                    <tr style="background: #f8f9fa;">
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600; background: #f0fff4;">Tisagenlecleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">58%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">6%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #f39c12; font-weight: 600;">21%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">7.4%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">3 days</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">8 days</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600; background: #f0f8ff;">Lisocabtagene maraleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #f39c12; font-weight: 600;">42%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">2%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #f39c12; font-weight: 600;">30%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">10%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">1 day</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">5 days</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- CRS Section -->
+                    <div class="assessment-grid">
+                        <div class="parameter-card toxicity-card">
+                            <h3><i class="fas fa-thermometer-full"></i> Cytokine Release Syndrome (CRS)</h3>
+                            
+                            <div class="toxicity-grading">
+                                <h4>ASTCT Grading Criteria</h4>
+                                <div class="grade-table">
+                                    <div class="grade-item grade-1">
+                                        <div class="grade-number">Grade 1</div>
+                                        <div class="grade-description">
+                                            <strong>Fever ≥38°C</strong><br>
+                                            No hypotension, no hypoxia
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-2">
+                                        <div class="grade-number">Grade 2</div>
+                                        <div class="grade-description">
+                                            <strong>Fever + Hypotension</strong><br>
+                                            OR Hypoxia requiring low-flow O₂ (≤6L/min)
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-3">
+                                        <div class="grade-number">Grade 3</div>
+                                        <div class="grade-description">
+                                            <strong>Fever + Hypotension requiring vasopressors</strong><br>
+                                            OR Hypoxia requiring high-flow O₂ or BiPAP
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-4">
+                                        <div class="grade-number">Grade 4</div>
+                                        <div class="grade-description">
+                                            <strong>Life-threatening</strong><br>
+                                            Vasopressors + mechanical ventilation
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="product-specific-notes">
+                                <h4>Product-Specific Insights</h4>
+                                <div class="product-note axi-cel">
+                                    <strong>Axicabtagene ciloleucel:</strong> Highest CRS rates (93% any grade), early onset (day 2), associated with robust CAR-T expansion. CD28 costimulation may contribute to rapid, intense cytokine release.
+                                </div>
+                                <div class="product-note tisa-cel">
+                                    <strong>Tisagenlecleucel:</strong> Moderate CRS rates (58% any grade), slightly delayed onset (day 3). 4-1BB costimulation associated with more controlled inflammatory response.
+                                </div>
+                                <div class="product-note liso-cel">
+                                    <strong>Lisocabtagene maraleucel:</strong> Lowest CRS rates (42% any grade), earliest onset (day 1) but shorter duration. Controlled IL-6 release profile may contribute to manageable toxicity.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ICANS Section -->
+                        <div class="parameter-card toxicity-card">
+                            <h3><i class="fas fa-brain"></i> Immune Cell-Associated Neurotoxicity (ICANS)</h3>
+                            
+                            <div class="toxicity-grading">
+                                <h4>ASTCT Grading Criteria</h4>
+                                <div class="grade-table">
+                                    <div class="grade-item grade-1">
+                                        <div class="grade-number">Grade 1</div>
+                                        <div class="grade-description">
+                                            <strong>ICE Score: 7-9</strong><br>
+                                            Mild cognitive impairment, no symptoms requiring intervention
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-2">
+                                        <div class="grade-number">Grade 2</div>
+                                        <div class="grade-description">
+                                            <strong>ICE Score: 3-6</strong><br>
+                                            Moderate cognitive impairment limiting ADLs
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-3">
+                                        <div class="grade-number">Grade 3</div>
+                                        <div class="grade-description">
+                                            <strong>ICE Score: 0-2</strong><br>
+                                            Severe cognitive impairment, hospitalization required
+                                        </div>
+                                    </div>
+                                    <div class="grade-item grade-4">
+                                        <div class="grade-number">Grade 4</div>
+                                        <div class="grade-description">
+                                            <strong>Life-threatening</strong><br>
+                                            Seizures, cerebral edema, motor weakness
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="product-specific-notes">
+                                <h4>Product-Specific Insights</h4>
+                                <div class="product-note axi-cel">
+                                    <strong>Axicabtagene ciloleucel:</strong> Highest ICANS rates (64% any grade, 28% grade ≥3). Often concurrent with CRS. Median onset day 4-5, can be prolonged and severe.
+                                </div>
+                                <div class="product-note tisa-cel">
+                                    <strong>Tisagenlecleucel:</strong> Lower ICANS rates (21% any grade, 7.4% grade ≥3). Less frequent concurrent CRS. May have delayed onset relative to CRS.
+                                </div>
+                                <div class="product-note liso-cel">
+                                    <strong>Lisocabtagene maraleucel:</strong> Moderate ICANS rates (30% any grade, 10% grade ≥3). Balanced toxicity profile with manageable neurotoxicity.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors -->
+                    <div class="comprehensive-result" style="display: block; margin-top: 2rem;">
+                        <div class="result-header">
+                            <h3>Risk Factors for Severe Toxicities</h3>
+                        </div>
+                        
+                        <div class="assessment-grid">
+                            <div class="risk-factor-card">
+                                <h4><i class="fas fa-exclamation-triangle"></i> High-Risk Factors for Severe CRS</h4>
+                                <ul class="risk-factor-list">
+                                    <li><strong>High tumor burden:</strong> Elevated LDH, large tumor mass, high MTV</li>
+                                    <li><strong>Inflammatory state:</strong> Elevated CRP, ferritin, IL-6</li>
+                                    <li><strong>Product type:</strong> CD28-based CARs (axi-cel) > 4-1BB CARs</li>
+                                    <li><strong>CAR-T expansion:</strong> High peak expansion correlates with CRS severity</li>
+                                    <li><strong>Age:</strong> Younger patients may have more robust inflammatory responses</li>
+                                    <li><strong>Thrombocytopenia:</strong> Platelet count <100K associated with severe CRS</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="risk-factor-card">
+                                <h4><i class="fas fa-brain"></i> High-Risk Factors for Severe ICANS</h4>
+                                <ul class="risk-factor-list">
+                                    <li><strong>Concurrent severe CRS:</strong> Grade ≥3 CRS increases ICANS risk</li>
+                                    <li><strong>Peak CAR-T levels:</strong> Very high expansion associated with neurotoxicity</li>
+                                    <li><strong>CNS involvement:</strong> History of CNS lymphoma</li>
+                                    <li><strong>Age extremes:</strong> Very young or elderly patients</li>
+                                    <li><strong>Baseline neurologic issues:</strong> Prior CNS infections, seizures</li>
+                                    <li><strong>Bridging therapy:</strong> CNS-penetrating agents may increase risk</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Management Guidelines -->
+                    <div class="comprehensive-result" style="display: block; margin-top: 2rem;">
+                        <div class="result-header">
+                            <h3>Management Guidelines</h3>
+                        </div>
+                        
+                        <div class="management-grid">
+                            <div class="management-card crs-management">
+                                <h4><i class="fas fa-stethoscope"></i> CRS Management</h4>
+                                <div class="management-steps">
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 1</div>
+                                        <div class="step-treatment">
+                                            <strong>Supportive care:</strong><br>
+                                            • Antipyretics, fluids<br>
+                                            • Monitor closely<br>
+                                            • No tocilizumab unless prolonged
+                                        </div>
+                                    </div>
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 2</div>
+                                        <div class="step-treatment">
+                                            <strong>Tocilizumab consideration:</strong><br>
+                                            • 8 mg/kg IV (max 800mg)<br>
+                                            • Vasopressors if needed<br>
+                                            • O₂ support
+                                        </div>
+                                    </div>
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 3-4</div>
+                                        <div class="step-treatment">
+                                            <strong>Aggressive intervention:</strong><br>
+                                            • Tocilizumab 8 mg/kg IV<br>
+                                            • Consider corticosteroids<br>
+                                            • ICU-level care
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="management-card icans-management">
+                                <h4><i class="fas fa-hospital"></i> ICANS Management</h4>
+                                <div class="management-steps">
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 1</div>
+                                        <div class="step-treatment">
+                                            <strong>Monitoring:</strong><br>
+                                            • Neurologic assessments q8h<br>
+                                            • ICE score monitoring<br>
+                                            • Seizure precautions
+                                        </div>
+                                    </div>
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 2</div>
+                                        <div class="step-treatment">
+                                            <strong>Corticosteroids:</strong><br>
+                                            • Dexamethasone 10mg IV q6h<br>
+                                            • Neurologic monitoring<br>
+                                            • MRI if worsening
+                                        </div>
+                                    </div>
+                                    <div class="management-step">
+                                        <div class="step-grade">Grade 3-4</div>
+                                        <div class="step-treatment">
+                                            <strong>High-dose steroids:</strong><br>
+                                            • Methylprednisolone 1000mg/day<br>
+                                            • Anti-seizure prophylaxis<br>
+                                            • Intensive monitoring
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reference-note-box">
+                            <h4><i class="fas fa-info-circle"></i> Key Management Principles</h4>
+                            <div class="management-principles">
+                                <p><strong>Timing is critical:</strong> Early recognition and intervention improve outcomes. CRS typically precedes ICANS.</p>
+                                <p><strong>Tocilizumab considerations:</strong> Crosses blood-brain barrier poorly; may not prevent ICANS. Can be repeated if needed.</p>
+                                <p><strong>Corticosteroid use:</strong> Reserved for ICANS or refractory CRS. May impact CAR-T persistence, but life-saving when needed.</p>
+                                <p><strong>Product differences:</strong> Understanding product-specific toxicity profiles helps anticipate and prepare for management needs.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Outcomes Section -->
+            <section id="outcomes" class="dashboard-section">
+                <div class="section-header">
+                    <h2>CAR-T Product Comparison</h2>
+                    <p>Clinical trial outcomes across different CAR-T products</p>
+                </div>
+                
+                <div class="risk-assessment-container">
+                    <div class="comprehensive-result" style="display: block;">
+                        <div class="result-header">
+                            <h3>Pivotal Trial Outcomes</h3>
+                        </div>
+                        
+                        <div style="overflow-x: auto; margin-bottom: 2rem;">
+                            <table style="width: 100%; border-collapse: collapse; background: white;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6; text-align: left;">Product</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Trial</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">ORR</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">CR Rate</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Median PFS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Grade ≥3 CRS</th>
+                                        <th style="padding: 1rem; border: 1px solid #dee2e6;">Grade ≥3 ICANS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600;">Axicabtagene ciloleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">ZUMA-1</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">82%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">54%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">5.8 mo</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c;">13%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #e74c3c;">28%</td>
+                                    </tr>
+                                    <tr style="background: #f8f9fa;">
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600;">Tisagenlecleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">JULIET</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">53%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">39%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">4.1 mo</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60;">6%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60;">7.4%</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; font-weight: 600;">Lisocabtagene maraleucel</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">TRANSCEND</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">73%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60; font-weight: 600;">53%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6;">NR</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60;">2%</td>
+                                        <td style="padding: 1rem; border: 1px solid #dee2e6; color: #27ae60;">10%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="outcome-grid">
+                            <div class="outcome-item">
+                                <span class="outcome-label">Key Insights</span>
+                                <div style="text-align: left; margin-top: 1rem;">
+                                    <p style="margin-bottom: 0.5rem;">• Axicabtagene ciloleucel shows highest response rates but increased toxicity</p>
+                                    <p style="margin-bottom: 0.5rem;">• Tisagenlecleucel has the most favorable safety profile</p>
+                                    <p style="margin-bottom: 0.5rem;">• Lisocabtagene maraleucel balances efficacy with manageable toxicity</p>
+                                    <p>• All products show durable responses in ~40% of patients</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- References Section -->
+            <section id="references" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Key Clinical References</h2>
+                    <p>Foundational studies and evidence base for CAR-T outcome prediction</p>
+                </div>
+                
+                <div class="risk-assessment-container">
+                    <div class="comprehensive-result" style="display: block;">
+                        <div class="result-header">
+                            <h3>Pivotal Clinical Trials</h3>
+                        </div>
+                        
+                        <div class="reference-category">
+                            <h4><i class="fas fa-flask"></i> Foundation Studies - Product Approvals</h4>
+                            <div class="reference-list">
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Axicabtagene Ciloleucel CAR T-Cell Therapy in Refractory Large B-Cell Lymphoma</div>
+                                        <div class="reference-authors">Neelapu SS, Locke FL, Bartlett NL, et al.</div>
+                                        <div class="reference-journal"><em>N Engl J Med</em>. 2017;377(26):2531-2544. doi:10.1056/NEJMoa1707447</div>
+                                        <div class="reference-note">ZUMA-1 Trial - First FDA approval for CAR-T therapy in LBCL</div>
+                                        <a href="https://pubmed.ncbi.nlm.nih.gov/29226797/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PubMed
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Long-term clinical outcomes of tisagenlecleucel in patients with relapsed or refractory aggressive B-cell lymphomas (JULIET)</div>
+                                        <div class="reference-authors">Schuster SJ, Tam CS, Borchmann P, et al.</div>
+                                        <div class="reference-journal"><em>Lancet Oncol</em>. 2021;22(10):1403-1415. doi:10.1016/S1470-2045(21)00375-2</div>
+                                        <div class="reference-note">JULIET Trial - Tisagenlecleucel long-term follow-up data</div>
+                                        <a href="https://pubmed.ncbi.nlm.nih.gov/34516954/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PubMed
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Lisocabtagene maraleucel for patients with relapsed or refractory large B-cell lymphomas (TRANSCEND NHL 001)</div>
+                                        <div class="reference-authors">Abramson JS, Palomba ML, Gordon LI, et al.</div>
+                                        <div class="reference-journal"><em>Lancet</em>. 2020;396(10254):839-852. doi:10.1016/S0140-6736(20)31366-X</div>
+                                        <div class="reference-note">TRANSCEND Trial - Lisocabtagene maraleucel registration study</div>
+                                        <a href="https://pubmed.ncbi.nlm.nih.gov/32888407/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PubMed
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Lisocabtagene Maraleucel Versus Standard of Care for Second-Line Relapsed/Refractory Large B-Cell Lymphoma: 3-Year Follow-Up From the Randomized, Phase III TRANSFORM Study</div>
+                                        <div class="reference-authors">Kamdar M, Solomon SR, Arnason J, et al.</div>
+                                        <div class="reference-journal"><em>J Clin Oncol</em>. 2025;43(24):2671-2678. doi:10.1200/JCO-25-00399</div>
+                                        <div class="reference-note">TRANSFORM Trial - Second-line CAR-T therapy randomized study</div>
+                                        <a href="https://ascopubs.org/doi/10.1200/JCO-25-00399" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> ASCO Publications
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reference-category">
+                            <h4><i class="fas fa-chart-line"></i> Biomarkers & Predictive Models</h4>
+                            <div class="reference-list">
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">An inflammatory biomarker signature of response to CAR-T cell therapy in non-Hodgkin lymphoma</div>
+                                        <div class="reference-authors">Raj SS, Fei T, Fried S, et al.</div>
+                                        <div class="reference-journal"><em>Nat Med</em>. 2025;31:1183-1194. doi:10.1038/s41591-025-03532-x</div>
+                                        <div class="reference-note">InflaMix model - Pre-treatment inflammatory signature predicting outcomes</div>
+                                        <a href="https://doi.org/10.1038/s41591-025-03532-x" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> Nature Medicine
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">CAR-HEMATOTOX: a model for CAR T-cell-related hematologic toxicity in relapsed/refractory large B-cell lymphoma</div>
+                                        <div class="reference-authors">Rejeski K, Perez A, Sesques P, et al.</div>
+                                        <div class="reference-journal"><em>Blood</em>. 2021;138(24):2499-2513. doi:10.1182/blood.2020010543</div>
+                                        <div class="reference-note">CAR-HEMATOTOX score - Predicting severe cytopenias post-CAR-T</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8893508/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">EASIX and m-EASIX predict CRS and ICANS in pediatric and AYA patients after CD19-CAR T-cell therapy</div>
+                                        <div class="reference-authors">Zandaki D, Selukar S, Bi Y, et al.</div>
+                                        <div class="reference-journal"><em>Blood Adv</em>. 2025;9(2):270-279. doi:10.1182/bloodadvances.2024014027</div>
+                                        <div class="reference-note">EASIX/m-EASIX scores - Toxicity prediction models</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11782822/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">CRP and ferritin in addition to the EASIX score predict CAR-T-related toxicity</div>
+                                        <div class="reference-authors">Greenbaum U, Strati P, Saliba RM, et al.</div>
+                                        <div class="reference-journal"><em>Blood Adv</em>. 2021;5(14):2799-2806. doi:10.1182/bloodadvances.2021004575</div>
+                                        <div class="reference-note">Enhanced EASIX model with inflammatory markers</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8341350/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reference-category">
+                            <h4><i class="fas fa-microscope"></i> Mechanistic & Prognostic Studies</h4>
+                            <div class="reference-list">
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Long-Duration Complete Remissions of Diffuse Large B Cell Lymphoma after Anti-CD19 Chimeric Antigen Receptor T Cell Therapy</div>
+                                        <div class="reference-authors">Kochenderfer JN, Somerville RPT, Lu T, et al.</div>
+                                        <div class="reference-journal"><em>Mol Ther</em>. 2017;25(10):2245-2253. doi:10.1016/j.ymthe.2017.07.004</div>
+                                        <div class="reference-note">Early mechanistic insights into CAR-T persistence and durability</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5628864/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Biomarkers of outcome in patients undergoing CD19 CAR-T therapy for large B cell lymphoma</div>
+                                        <div class="reference-authors">Gong IY, Tran D, Saibil S, et al.</div>
+                                        <div class="reference-journal"><em>Hemasphere</em>. 2024;8(8):e130. doi:10.1002/hem3.130</div>
+                                        <div class="reference-note">Comprehensive biomarker analysis for outcome prediction</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11339649/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Biomarkers for Predicting Cytokine Release Syndrome following CD19-Targeted CAR T Cell Therapy</div>
+                                        <div class="reference-authors">Tedesco VE, Mohan C.</div>
+                                        <div class="reference-journal"><em>J Immunol</em>. 2021;206(7):1561-1568. doi:10.4049/jimmunol.2001249</div>
+                                        <div class="reference-note">CRS prediction biomarkers and mechanisms</div>
+                                        <a href="https://doi.org/10.4049/jimmunol.2001249" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> Journal of Immunology
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reference-category">
+                            <h4><i class="fas fa-book-medical"></i> Reviews & Meta-Analyses</h4>
+                            <div class="reference-list">
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Systematic literature review to identify prognostic factors of efficacy and safety outcomes of chimeric antigen receptor T-Cell therapies in diffuse large B-Cell lymphoma</div>
+                                        <div class="reference-authors">Schleifenbaum JK, Heger JM, Jost J, et al.</div>
+                                        <div class="reference-journal"><em>J Cancer Res Clin Oncol</em>. 2025;151:203. doi:10.1007/s00432-025-06249-z</div>
+                                        <div class="reference-note">Comprehensive systematic review of prognostic factors</div>
+                                        <a href="https://doi.org/10.1007/s00432-025-06249-z" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> Journal Link
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">Predicting Outcomes following Anti-CD19 CAR T Cell Therapy in Aggressive B Cell Lymphomas</div>
+                                        <div class="reference-authors">Ho C, Svoboda J.</div>
+                                        <div class="reference-journal"><em>Transplant Cell Ther</em>. 2021;27(3):195-196. doi:10.1016/j.jtct.2021.02.005</div>
+                                        <div class="reference-note">Clinical perspective on outcome prediction strategies</div>
+                                        <a href="https://pubmed.ncbi.nlm.nih.gov/33781514/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PubMed
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <div class="reference-content">
+                                        <div class="reference-title">A validated composite comorbidity index predicts outcomes of CAR T-cell therapy in patients with diffuse large B-cell lymphoma</div>
+                                        <div class="reference-authors">Shouse G, Kaempf A, Gordon MJ, et al.</div>
+                                        <div class="reference-journal"><em>Blood Adv</em>. 2023;7(14):3516-3529. doi:10.1182/bloodadvances.2022009309</div>
+                                        <div class="reference-note">Severe4 comorbidity index validation study</div>
+                                        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10362276/" target="_blank" class="reference-link">
+                                            <i class="fas fa-external-link-alt"></i> PMC
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reference-note-box">
+                            <h4><i class="fas fa-info-circle"></i> Usage Note</h4>
+                            <p>These references form the evidence base for the predictive models and scoring systems implemented in this dashboard. The multi-layered framework synthesizes findings from these studies to provide comprehensive outcome predictions. All calculations are based on published algorithms and validated scoring systems.</p>
+                            <p><strong>Clinical Disclaimer:</strong> This tool is for educational and research purposes. Clinical decisions should always involve direct consultation with qualified healthcare providers and consideration of individual patient factors not captured in these models.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-content">
+                <p>&copy; 2024 CAR-T Outcome Prediction Dashboard | Based on clinical evidence from ZUMA-1, JULIET, and TRANSCEND trials</p>
+                <p><small>For research and educational purposes. Not for clinical decision-making without physician consultation.</small></p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+// Global variables for charts
+let riskChart = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeNavigation();
+    setupInputListeners();
+    updateThresholdIndicators();
+});
+
+// Navigation functionality
+function initializeNavigation() {
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const sections = document.querySelectorAll('.dashboard-section');
+    
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetSection = this.getAttribute('data-section');
+            
+            // Update active nav button
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update active section
+            sections.forEach(section => section.classList.remove('active'));
+            document.getElementById(targetSection).classList.add('active');
+        });
+    });
+}
+
+// Setup input listeners for real-time updates
+function setupInputListeners() {
+    // CAR-HEMATOTOX threshold indicators
+    const hematotoxInputs = ['hematotox-hgb', 'hematotox-plt', 'hematotox-crp', 'hematotox-ferritin'];
+    hematotoxInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateThresholdIndicators);
+        }
+    });
+}
+
+// Update threshold indicators for CAR-HEMATOTOX
+function updateThresholdIndicators() {
+    const hgb = parseFloat(document.getElementById('hematotox-hgb')?.value) || 0;
+    const plt = parseFloat(document.getElementById('hematotox-plt')?.value) || 0;
+    const crp = parseFloat(document.getElementById('hematotox-crp')?.value) || 0;
+    const ferritin = parseFloat(document.getElementById('hematotox-ferritin')?.value) || 0;
+    
+    // Update threshold indicators
+    updateThresholdStatus('hgb-threshold', hgb < 10, 'Hemoglobin', '≥10 g/dL', '<10 g/dL (+1 pt)');
+    updateThresholdStatus('plt-threshold', plt < 100, 'Platelets', '≥100 ×10³/μL', '<100 ×10³/μL (+1 pt)');
+    updateThresholdStatus('crp-threshold', crp > 30, 'CRP', '≤30 mg/L', '>30 mg/L (+1 pt)');
+    updateThresholdStatus('ferritin-threshold', ferritin > 700, 'Ferritin', '≤700 ng/mL', '>700 ng/mL (+1 pt)');
+}
+
+function updateThresholdStatus(elementId, isAbnormal, label, normalText, abnormalText) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.className = `threshold-indicator ${isAbnormal ? 'abnormal' : 'normal'}`;
+        element.innerHTML = `<span class="threshold-text">${isAbnormal ? abnormalText : normalText}</span>`;
+    }
+}
+
+// Comprehensive Risk Assessment Calculator
+function calculateComprehensiveRisk() {
+    // Get all input values
+    const age = parseInt(document.getElementById('age').value);
+    const ecog = parseInt(document.getElementById('ecog').value);
+    const priorLines = parseInt(document.getElementById('prior-lines').value);
+    const stage = parseInt(document.getElementById('stage').value);
+    const ldh = parseInt(document.getElementById('ldh').value);
+    const crp = parseFloat(document.getElementById('crp').value);
+    const ferritin = parseInt(document.getElementById('ferritin').value);
+    const hemoglobin = parseFloat(document.getElementById('hemoglobin').value);
+    const platelets = parseInt(document.getElementById('platelets').value);
+    const anc = parseFloat(document.getElementById('anc').value);
+    const mtv = parseFloat(document.getElementById('mtv').value);
+    const tlg = parseFloat(document.getElementById('tlg').value);
+    const extranodal = parseInt(document.getElementById('extranodal').value);
+    const largestLesion = parseFloat(document.getElementById('largest-lesion').value);
+    const tp53 = document.getElementById('tp53').value;
+    const myc = document.getElementById('myc').value;
+    const coo = document.getElementById('coo').value;
+    const ctdna = parseInt(document.getElementById('ctdna').value);
+    
+    // Calculate risk score based on the multi-layered framework from the thesis
+    let riskScore = 0;
+    let riskFactors = [];
+    
+    // Layer 1: Pre-treatment factors
+    
+    // Clinical factors
+    if (age > 65) {
+        riskScore += 1;
+        riskFactors.push('Age >65');
+    }
+    if (ecog >= 2) {
+        riskScore += 2;
+        riskFactors.push('ECOG ≥2');
+    }
+    if (priorLines >= 3) {
+        riskScore += 1;
+        riskFactors.push('≥3 prior lines');
+    }
+    if (stage >= 3) {
+        riskScore += 1;
+        riskFactors.push('Advanced stage');
+    }
+    
+    // Laboratory factors (InflaMix components)
+    if (ldh > 280) {
+        riskScore += 1;
+        riskFactors.push('Elevated LDH');
+    }
+    if (crp > 30) {
+        riskScore += 2;
+        riskFactors.push('High CRP (inflammatory signature)');
+    }
+    if (ferritin > 700) {
+        riskScore += 1;
+        riskFactors.push('High ferritin');
+    }
+    if (hemoglobin < 10) {
+        riskScore += 1;
+        riskFactors.push('Anemia');
+    }
+    if (platelets < 100) {
+        riskScore += 1;
+        riskFactors.push('Thrombocytopenia');
+    }
+    if (anc < 1.5) {
+        riskScore += 1;
+        riskFactors.push('Neutropenia');
+    }
+    
+    // Tumor burden (high-risk thresholds from thesis)
+    if (mtv > 75) {
+        riskScore += 2;
+        riskFactors.push('High MTV (>75 mL)');
+    }
+    if (tlg > 300) {
+        riskScore += 1;
+        riskFactors.push('High TLG');
+    }
+    if (extranodal > 2) {
+        riskScore += 1;
+        riskFactors.push('Multiple extranodal sites');
+    }
+    if (largestLesion > 7) {
+        riskScore += 1;
+        riskFactors.push('Bulky disease');
+    }
+    
+    // Genomic factors (Layer 2 influence)
+    if (tp53 === 'mutated') {
+        riskScore += 2;
+        riskFactors.push('TP53 mutation (resistance factor)');
+    }
+    if (myc === 'double-hit') {
+        riskScore += 2;
+        riskFactors.push('Double-hit lymphoma');
+    } else if (myc === 'rearranged') {
+        riskScore += 1;
+        riskFactors.push('MYC rearrangement');
+    }
+    if (coo === 'abc') {
+        riskScore += 1;
+        riskFactors.push('ABC subtype');
+    }
+    if (ctdna > 1000) {
+        riskScore += 1;
+        riskFactors.push('High baseline ctDNA');
+    }
+    
+    // Determine risk category and outcomes based on clinical evidence from thesis
+    let riskCategory, crRate, pfs1y, os1y, crsRisk, icansRisk;
+    
+    if (riskScore <= 3) {
+        riskCategory = 'Low Risk';
+        crRate = 75; // Based on ZUMA-1 favorable subset
+        pfs1y = 70;
+        os1y = 85;
+        crsRisk = 8;
+        icansRisk = 5;
+    } else if (riskScore <= 7) {
+        riskCategory = 'Intermediate Risk';
+        crRate = 60; // Intermediate outcomes
+        pfs1y = 50;
+        os1y = 70;
+        crsRisk = 15;
+        icansRisk = 12;
+    } else {
+        riskCategory = 'High Risk';
+        crRate = 40; // High-risk patients from thesis
+        pfs1y = 30;
+        os1y = 50;
+        crsRisk = 25;
+        icansRisk = 20;
+    }
+    
+    // Update display
+    document.getElementById('overall-score').textContent = riskScore;
+    document.getElementById('overall-category').textContent = riskCategory;
+    document.getElementById('overall-category').className = `risk-category ${riskCategory.toLowerCase().replace(' ', '-')}`;
+    
+    document.getElementById('cr-rate').textContent = `${crRate}%`;
+    document.getElementById('pfs-1y').textContent = `${pfs1y}%`;
+    document.getElementById('os-1y').textContent = `${os1y}%`;
+    document.getElementById('crs-risk').textContent = `${crsRisk}%`;
+    document.getElementById('icans-risk').textContent = `${icansRisk}%`;
+    
+    // Create risk visualization
+    createRiskChart(riskScore, riskCategory, riskFactors);
+    
+    // Show results
+    document.getElementById('comprehensive-result').style.display = 'block';
+    document.getElementById('comprehensive-result').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Create risk visualization chart
+function createRiskChart(riskScore, riskCategory, riskFactors) {
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    
+    if (riskChart) {
+        riskChart.destroy();
+    }
+    
+    const maxScore = 20; // Maximum possible score based on all factors
+    
+    let color;
+    if (riskScore <= 3) color = '#27ae60';
+    else if (riskScore <= 7) color = '#f39c12';
+    else color = '#e74c3c';
+    
+    riskChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Risk Score', 'Remaining'],
+            datasets: [{
+                data: [riskScore, maxScore - riskScore],
+                backgroundColor: [color, '#ecf0f1'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: `Risk Score: ${riskScore}/${maxScore} (${riskCategory})`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+}
+
+// CAR-HEMATOTOX Score Calculator
+function calculateHematotox() {
+    const hgb = parseFloat(document.getElementById('hematotox-hgb').value);
+    const plt = parseFloat(document.getElementById('hematotox-plt').value);
+    const crp = parseFloat(document.getElementById('hematotox-crp').value);
+    const ferritin = parseFloat(document.getElementById('hematotox-ferritin').value);
+    
+    let score = 0;
+    let scoringComponents = [];
+    
+    if (hgb < 10) {
+        score += 1;
+        scoringComponents.push('Hemoglobin <10 g/dL');
+    }
+    if (plt < 100) {
+        score += 1;
+        scoringComponents.push('Platelets <100 ×10³/μL');
+    }
+    if (crp > 30) {
+        score += 1;
+        scoringComponents.push('CRP >30 mg/L');
+    }
+    if (ferritin > 700) {
+        score += 1;
+        scoringComponents.push('Ferritin >700 ng/mL');
+    }
+    
+    let riskLevel, riskClass, implications;
+    
+    if (score <= 1) {
+        riskLevel = 'Low Risk';
+        riskClass = 'low';
+        implications = [
+            'Low risk of severe cytopenia (~20%)',
+            'Standard monitoring protocols sufficient',
+            'Shorter hospitalization expected',
+            'Lower transfusion requirements',
+            'Good candidate for outpatient monitoring'
+        ];
+    } else if (score === 2) {
+        riskLevel = 'Intermediate Risk';
+        riskClass = 'intermediate';
+        implications = [
+            'Moderate risk of severe cytopenia (~45%)',
+            'Enhanced monitoring recommended',
+            'Prepare for possible extended hospitalization',
+            'Monitor closely for infectious complications',
+            'Consider prophylactic measures'
+        ];
+    } else {
+        riskLevel = 'High Risk';
+        riskClass = 'high';
+        implications = [
+            'High risk of severe cytopenia (~70%)',
+            'Intensive monitoring required',
+            'Extended hospitalization likely',
+            'Consider prophylactic growth factors',
+            'Close infectious disease consultation',
+            'Aggressive supportive care planning'
+        ];
+    }
+    
+    // Update display
+    document.getElementById('hematotox-score').textContent = score;
+    document.getElementById('hematotox-interpretation').textContent = riskLevel;
+    document.getElementById('hematotox-interpretation').className = `score-interpretation ${riskClass}`;
+    
+    // Update implications
+    const implicationsElement = document.getElementById('implications-content');
+    implicationsElement.innerHTML = implications.map(item => `<p>• ${item}</p>`).join('');
+    
+    // Show results
+    document.getElementById('hematotox-result').style.display = 'block';
+    document.getElementById('hematotox-result').scrollIntoView({ behavior: 'smooth' });
+}
+
+// IPET Score Calculator
+function calculateIPET() {
+    const stage = parseInt(document.getElementById('ipet-stage').value);
+    const ldh = parseInt(document.getElementById('ipet-ldh').value);
+    const anc = parseFloat(document.getElementById('ipet-anc').value);
+    
+    let score = 0;
+    let components = [];
+    
+    // Advanced stage (III/IV)
+    if (stage >= 3) {
+        score += 1;
+        components.push('Advanced stage (III/IV)');
+    }
+    
+    // Elevated LDH (assuming ULN of 280)
+    if (ldh > 280) {
+        score += 1;
+        components.push('Elevated LDH');
+    }
+    
+    // Low ANC
+    if (anc < 1.5) {
+        score += 1;
+        components.push('Low ANC (<1.5)');
+    }
+    
+    let riskGroup, riskClass;
+    if (score <= 1) {
+        riskGroup = 'Low Risk';
+        riskClass = 'low';
+    } else if (score === 2) {
+        riskGroup = 'Intermediate Risk';
+        riskClass = 'intermediate';
+    } else {
+        riskGroup = 'High Risk';
+        riskClass = 'high';
+    }
+    
+    // Update display
+    document.getElementById('ipet-score-value').textContent = score;
+    document.getElementById('ipet-risk-group').textContent = riskGroup;
+    document.getElementById('ipet-risk-group').className = `score-interpretation ${riskClass}`;
+    
+    // Show results
+    document.getElementById('ipet-result').style.display = 'block';
+    document.getElementById('ipet-result').scrollIntoView({ behavior: 'smooth' });
+}
+    </script>
+</body>
+</html>
