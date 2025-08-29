@@ -852,7 +852,7 @@ body {
         <nav class="dashboard-nav">
             <button class="nav-btn active" data-section="risk-assessment">Risk Assessment</button>
             <button class="nav-btn" data-section="car-hematotox">CAR-HEMATOTOX</button>
-            <button class="nav-btn" data-section="ipet-score">IPI Risk Score</button>
+            <button class="nav-btn" data-section="ipi-score">IPI Risk Score</button>
             <button class="nav-btn" data-section="toxicities">Toxicities</button>
             <button class="nav-btn" data-section="outcomes">Outcomes</button>
             <button class="nav-btn" data-section="references">References</button>
@@ -1152,8 +1152,8 @@ body {
                 </div>
             </section>
 
-            <!-- IPET Score Section -->
-            <section id="ipet-score" class="dashboard-section">
+            <!-- IPI Score Section -->
+            <section id="ipi-score" class="dashboard-section">
                 <div class="section-header">
                     <h2>IPI Risk Score</h2>
                     <p>Modified International Prognostic Index for CAR-T patient stratification</p>
@@ -1177,8 +1177,8 @@ body {
                     <div class="hematotox-inputs">
                         <div class="input-grid">
                             <div class="input-group">
-                                <label for="ipet-stage">Clinical Stage</label>
-                                <select id="ipet-stage">
+                                <label for="ipi-stage">Clinical Stage</label>
+                                <select id="ipi-stage">
                                     <option value="1">Stage I</option>
                                     <option value="2">Stage II</option>
                                     <option value="3" selected>Stage III</option>
@@ -1186,28 +1186,28 @@ body {
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label for="ipet-ldh">LDH (U/L)</label>
-                                <input type="number" id="ipet-ldh" min="100" max="3000" value="400">
+                                <label for="ipi-ldh">LDH (U/L)</label>
+                                <input type="number" id="ipi-ldh" min="100" max="3000" value="400">
                                 <small>ULN typically 250-280 U/L</small>
                             </div>
                             <div class="input-group">
-                                <label for="ipet-anc">Absolute Neutrophil Count (×10³/μL)</label>
-                                <input type="number" id="ipet-anc" min="0.1" max="20" step="0.1" value="2.5">
+                                <label for="ipi-anc">Absolute Neutrophil Count (×10³/μL)</label>
+                                <input type="number" id="ipi-anc" min="0.1" max="20" step="0.1" value="2.5">
                             </div>
                         </div>
                         
-                        <button class="calculate-btn" onclick="calculateIPET()">
+                        <button class="calculate-btn" onclick="calculateIPI()">
                             <i class="fas fa-calculator"></i> Calculate IPI Risk Score
                         </button>
                     </div>
                     
-                    <div class="hematotox-result" id="ipet-result" style="display: none;">
+                    <div class="hematotox-result" id="ipi-result" style="display: none;">
                         <div class="score-display">
                             <div class="score-value">
-                                <span id="ipet-score-value">0</span>
+                                <span id="ipi-score-value">0</span>
                                 <span class="score-unit">points</span>
                             </div>
-                            <div class="score-interpretation" id="ipet-risk-group">Low Risk</div>
+                            <div class="score-interpretation" id="ipi-risk-group">Low Risk</div>
                         </div>
                         
                         <div class="clinical-implications">
@@ -2157,11 +2157,11 @@ function calculateHematotox() {
     document.getElementById('hematotox-result').scrollIntoView({ behavior: 'smooth' });
 }
 
-// IPET Score Calculator
-function calculateIPET() {
-    const stage = parseInt(document.getElementById('ipet-stage').value);
-    const ldh = parseInt(document.getElementById('ipet-ldh').value);
-    const anc = parseFloat(document.getElementById('ipet-anc').value);
+// IPI Score Calculator
+function calculateIPI() {
+    const stage = parseInt(document.getElementById('ipi-stage').value);
+    const ldh = parseInt(document.getElementById('ipi-ldh').value);
+    const anc = parseFloat(document.getElementById('ipi-anc').value);
     
     let score = 0;
     let components = [];
@@ -2197,13 +2197,13 @@ function calculateIPET() {
     }
     
     // Update display
-    document.getElementById('ipet-score-value').textContent = score;
-    document.getElementById('ipet-risk-group').textContent = riskGroup;
-    document.getElementById('ipet-risk-group').className = `score-interpretation ${riskClass}`;
+    document.getElementById('ipi-score-value').textContent = score;
+    document.getElementById('ipi-risk-group').textContent = riskGroup;
+    document.getElementById('ipi-risk-group').className = `score-interpretation ${riskClass}`;
     
     // Show results
-    document.getElementById('ipet-result').style.display = 'block';
-    document.getElementById('ipet-result').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('ipi-result').style.display = 'block';
+    document.getElementById('ipi-result').scrollIntoView({ behavior: 'smooth' });
 }
     </script>
 </body>
